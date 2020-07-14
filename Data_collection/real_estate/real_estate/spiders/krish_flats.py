@@ -9,7 +9,7 @@ from scrapy_splash import SplashRequest
 class RealEstateKz(Spider):
     
     # Unique name
-    name = 'RealEstateKz'
+    name = 'krisha_flats'
 
     page_number = 60
 
@@ -17,7 +17,7 @@ class RealEstateKz(Spider):
         self.index = 0
         
 
-        web = 'https://krisha.kz/arenda/kvartiry/almaty/?das[rent.period][0]=2'
+        web = 'https://krisha.kz/arenda/komnaty/almaty/'
     
         yield SplashRequest(web, callback=self.get_links, args={'wait': 5})
     
@@ -48,8 +48,6 @@ class RealEstateKz(Spider):
         
         # Type of ownership
         owners = []
-        # Binary object. if apartments are checked 1, othrerwise 0
-        checked_by = []
                         
         for index, owner in enumerate(response.xpath('/html/body/main/section[3]/div/section[1]/div/div/div/div[2]/div[1]')):
             checked_pro = owner.xpath('./@class').extract_first()
@@ -89,16 +87,13 @@ class RealEstateKz(Spider):
         time.sleep(2)
         
     def parse_data(self, response, header, price, address, owner):
-
-        other_params = {'house_type': None,
+        other_params = {'district': None,
+                        'этаж': None,
                         'area': None, 
                         'condition': None, 
                         'bathroom': None,
-                        'accommodations': None,
-                        }
-
-        # house type
-        house_type = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div[2]/div[3]/text()').get()
+                        'accommodations': None}
+        
        
         # district
         def get_district(xpath):
@@ -109,35 +104,22 @@ class RealEstateKz(Spider):
         
         district = get_district(response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/span/text()'))
 
+        # Other params
         params_xpath = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div')
 
         for x_path in params_xpath:
             
             key = x_path.xpath('./div[1]/text()').get()
             value = x_path.xpath('./div[3]/text()').get() 
-            if key == 'Площадь':
-                other_params['area'] = value
-            elif key == 'Состояние':
-                other_params['condition'] = value
-            elif key == 'Санузел':
-                other_params['bathroom'] = value
-        
-        # Other params
-        params_xpath = response.xpath('/html/body/main/div[2]/div/div[2]/div[2]/div[6]/div[1]/dl')
-
-        for x_path in params_xpath:
-            
-            key = x_path.xpath('.//dt/text()').get()
-            value = x_path.xpath('.//dd/text()').get()
-            if key == 'Балкон остеклён':
-                other_params['Балкон остеклён'] = value
-            elif key == 'Парковка':
-                other_params['Парковка'] = value
-            elif key == 'Интернет':
-                other_params['Интернет'] = value
-            elif key == 'Мебель':
+            if key == 'Мебель':
                 other_params['accommodations'] = value
+            elif key == 'Этаж':
+                other_params['этаж'] = value
+            elif key == 'Площадь':
+                other_params['area'] = value
 
+
+        # if Owner is empty
         if owner == None:
             owner = 'Хозяин'
 
@@ -147,28 +129,29 @@ class RealEstateKz(Spider):
             'url': response.url,
             'datetime': time.mktime(datetime.now().timetuple()),
             'header': header,
-            'rent_type': 'квартира',
+            'rent_type': 'комната',
             'price': price,
             'district': district,
-            'floor': None,
+            'floor': other_params['этаж'],
             'address': address,
             'owner' : owner,
-            'house_type': house_type,
+            'house_type': None,
             'area': other_params['area'],
-            'condition': other_params['condition'],
-            'bathroom': other_params['bathroom'],
+            'condition': None,
+            'bathroom': None,
             'accommodations': other_params['accommodations'],
         }
 
+
         # multiple pages option
 
-        home_page = 'https://krisha.kz/arenda/kvartiry/almaty/?das[rent.period][0]=2&das[rent.period][1]=3&page={}'
+        home_page = 'https://krisha.kz/arenda/komnaty/almaty/?page={}'
 
         # If next_page have value
         for page in range(2, RealEstateKz.page_number):
             
             # we use += operator to limit number of pages
             next_page = home_page.format(page)
-    
+
             yield scrapy.Request(url=next_page, callback=self.get_links)
 
