@@ -11,13 +11,17 @@ class RealEstateKz(Spider):
     # Unique name
     name = 'RealEstateKz'
 
-    page_number = 60
+    page_number = 130
 
     def start_requests(self):
         self.index = 0
         
 
-        web = 'https://krisha.kz/arenda/kvartiry/almaty/?das[rent.period][0]=2'
+        web = 'https://krisha.kz/arenda/kvartiry/almaty/?das[flat.building][]=1&das[flat.building]' \
+              '[]=2&das[flat.building][]=3&das[flat.building][]=0&das[flat.renovation][]=1&das[flat.renovation]' \
+              '[]=2&das[flat.renovation][]=3&das[flat.renovation][]=4&das[flat.renovation][]=5&das[flat.renovation]' \
+                  '[]=6&das[flat.toilet][]=1&das[flat.toilet][]=2&das[flat.toilet][]=3&das[flat.toilet][]=4&das[live.furniture][]=1&das[live.furniture]' \
+                      '[]=2&das[live.furniture][]=3&das[rent.period]=2'
     
         yield SplashRequest(web, callback=self.get_links, args={'wait': 5})
     
@@ -68,27 +72,17 @@ class RealEstateKz(Spider):
 
 
         for index, link in enumerate(links):
-            z = 0
-            # we need z+1 value to get price, where xpath is different from normal
-            if index % 2 == 1:
-                z = 1
-                yield scrapy.Request(link, callback=self.parse_data, 
+            # we need index+1 value to get price, where xpath is different from normal
 
-                cb_kwargs=dict(header = headers[index],
-                            price = prices[index+z].strip().replace('\xa0', ''),
-                            address = addresses[index].strip() + ', ' + cities[index],
-                            owner = owners[index],))
-            else:
-                yield scrapy.Request(link, callback=self.parse_data, 
+            yield scrapy.Request(link, callback=self.parse_data, 
 
-                cb_kwargs={"header": headers[index],
-                            "price": prices[index].strip().replace('\xa0', ''),
-                            "address": addresses[index].strip() + ', ' + cities[index],
-                            "owner": owners[index],
-                            })
+            cb_kwargs=dict(header = headers[index],
+                        address = addresses[index].strip() + ', ' + cities[index],
+                        owner = owners[index],))
+            
         time.sleep(2)
         
-    def parse_data(self, response, header, price, address, owner):
+    def parse_data(self, response, header, address, owner):
 
         other_params = {'house_type': None,
                         'area': None, 
@@ -108,6 +102,8 @@ class RealEstateKz(Spider):
                 return None
         
         district = get_district(response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/span/text()'))
+
+        price = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[1]/div/text()').get().strip().replace('\xa0', '')
 
         params_xpath = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div')
 
@@ -162,7 +158,11 @@ class RealEstateKz(Spider):
 
         # multiple pages option
 
-        home_page = 'https://krisha.kz/arenda/kvartiry/almaty/?das[rent.period][0]=2&das[rent.period][1]=3&page={}'
+        home_page = 'https://krisha.kz/arenda/kvartiry/almaty/?das[flat.building][]=1&das[flat.building]' \
+                    '[]=2&das[flat.building][]=3&das[flat.building][]=0&das[flat.renovation][]=1&das[flat.renovation]' \
+                    '[]=2&das[flat.renovation][]=3&das[flat.renovation][]=4&das[flat.renovation][]=5&das[flat.renovation]' \
+                    '[]=6&das[flat.toilet][]=1&das[flat.toilet][]=2&das[flat.toilet][]=3&das[flat.toilet][]=4&das[live.furniture][]=1&das[live.furniture]' \
+                    '[]=2&das[live.furniture][]=3&das[rent.period]=2&page={}'
 
         # If next_page have value
         for page in range(2, RealEstateKz.page_number):

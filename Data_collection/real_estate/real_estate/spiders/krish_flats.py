@@ -66,27 +66,17 @@ class RealEstateKz(Spider):
 
 
         for index, link in enumerate(links):
-            z = 0
-            # we need z+1 value to get price, where xpath is different from normal
-            if index % 2 == 1:
-                z = 1
-                yield scrapy.Request(link, callback=self.parse_data, 
+            # we need index+1 value to get price, where xpath is different from normal
 
-                cb_kwargs=dict(header = headers[index],
-                            price = prices[index+z].strip().replace('\xa0', ''),
-                            address = addresses[index].strip() + ', ' + cities[index],
-                            owner = owners[index],))
-            else:
-                yield scrapy.Request(link, callback=self.parse_data, 
+            yield scrapy.Request(link, callback=self.parse_data, 
 
-                cb_kwargs={"header": headers[index],
-                            "price": prices[index].strip().replace('\xa0', ''),
-                            "address": addresses[index].strip() + ', ' + cities[index],
-                            "owner": owners[index],
-                            })
+            cb_kwargs=dict(header = headers[index],
+                        address = addresses[index].strip() + ', ' + cities[index],
+                        owner = owners[index],))
+
         time.sleep(2)
         
-    def parse_data(self, response, header, price, address, owner):
+    def parse_data(self, response, header, address, owner):
         other_params = {'district': None,
                         'этаж': None,
                         'area': None, 
@@ -103,6 +93,8 @@ class RealEstateKz(Spider):
                 return None
         
         district = get_district(response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/span/text()'))
+
+        price = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[1]/div/text()').get().strip().replace('\xa0', '')
 
         # Other params
         params_xpath = response.xpath('/html/body/main/div[2]/div/div[2]/div[1]/div[1]/div[2]/div')
