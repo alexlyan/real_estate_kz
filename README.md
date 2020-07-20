@@ -1,4 +1,4 @@
-Predictions of apartments prices
+Predictions of apartment prices
 ===============================
 
 This is project to predict monthly renting prices of apartments in Almaty, Kazakhstan.
