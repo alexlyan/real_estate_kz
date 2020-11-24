@@ -7,7 +7,7 @@ This is project to predict monthly renting prices of apartments in Almaty, Kazak
 1. To find out what apartments are worth renting
 2. Prediction of renting price of apartments 
 
-Notebook of renting price prediction [kz_analysis.ipynb](/kz_analysis.ipynb) was writter in readable form to share knowledge.
+Notebook of renting price prediction [kz_analysis.ipynb](/kz_analysis.ipynb) was written in readable form to share knowledge.
 
 In README, you will find only explanation to data collection, other stages are explained in notebook.
 
