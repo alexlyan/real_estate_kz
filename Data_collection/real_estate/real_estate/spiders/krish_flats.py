@@ -72,7 +72,7 @@ class RealEstateKz(Spider):
 
             cb_kwargs=dict(header = headers[index],
                         address = addresses[index].strip() + ', ' + cities[index],
-                        owner = owners[index],))
+                        owner = owners[index]))
 
         time.sleep(2)
         
